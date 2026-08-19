@@ -24,6 +24,10 @@
     --green-bg: #e8f7ef;
     --red: #d13b3b;
     --red-bg: #fbebeb;
+    --amber: #b8720c;
+    --amber-bg: #fbf0dd;
+    --gray: #6b6a66;
+    --gray-bg: #eeece7;
     --accent: #16171a;
   }
   *{box-sizing:border-box;}
@@ -86,6 +90,62 @@
     cursor:pointer;
   }
   .sortbtn.active{ color:var(--ink); border-color:#c9c7c0; }
+  #settingsToggle{
+    flex:0 0 auto;
+    padding:0 13px;
+    font-size:15px;
+  }
+  .settings-panel{
+    display:none;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:16px 16px 12px;
+    margin-bottom:16px;
+  }
+  .settings-panel.open{ display:block; }
+  .settings-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .settings-row label{
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .settings-input-wrap{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:var(--bg);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:6px 10px;
+  }
+  .settings-input-wrap input{
+    width:52px;
+    border:none;
+    background:transparent;
+    font-family:'Roboto Mono', monospace;
+    font-size:14px;
+    font-weight:700;
+    color:var(--ink);
+    text-align:right;
+  }
+  .settings-input-wrap input:focus{ outline:none; }
+  .settings-input-wrap span{
+    font-size:12px;
+    color:var(--sub);
+    font-weight:600;
+  }
+  .settings-note{
+    font-size:11.5px;
+    color:var(--sub);
+    line-height:1.5;
+    margin:4px 0 0;
+  }
   .status-line{
     display:flex;
     justify-content:space-between;
@@ -164,6 +224,110 @@
     color:var(--sub);
     font-weight:500;
   }
+  .signal-badge{
+    display:inline-block;
+    margin-top:8px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    padding:4px 9px;
+    border-radius:999px;
+  }
+  .signal-badge.up{ background:var(--green-bg); color:var(--green); }
+  .signal-badge.down{ background:var(--red-bg); color:var(--red); }
+  .signal-badge.analyzing{ background:var(--amber-bg); color:var(--amber); }
+  .signal-badge.wait{ background:var(--gray-bg); color:var(--gray); }
+  .signal-badge.pulse{ animation: badgepulse 1.4s infinite; }
+  @keyframes badgepulse{
+    0%{opacity:1;} 50%{opacity:.55;} 100%{opacity:1;}
+  }
+  .card{ cursor:pointer; }
+
+  /* chart overlay */
+  .chart-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:var(--bg);
+    z-index:100;
+    flex-direction:column;
+    padding:20px 18px;
+  }
+  .chart-overlay.open{ display:flex; }
+  .chart-header{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:16px;
+  }
+  .chart-back{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:12px;
+    width:38px; height:38px;
+    font-size:18px;
+    cursor:pointer;
+    color:var(--ink);
+    flex-shrink:0;
+  }
+  .chart-symbol{
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+  }
+  .chart-price{
+    font-family:'Roboto Mono', monospace;
+    font-size:14px;
+    font-weight:600;
+    color:var(--sub);
+    margin-top:2px;
+  }
+  .chart-tf-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .tf-btn{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:8px 14px;
+    font-family:'Inter';
+    font-size:13px;
+    font-weight:600;
+    color:var(--sub);
+    cursor:pointer;
+  }
+  .tf-btn.active{ color:#fff; background:var(--ink); border-color:var(--ink); }
+  .chart-canvas-wrap{
+    position:relative;
+    flex:1;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:16px;
+    overflow:hidden;
+    min-height:320px;
+  }
+  #chartCanvas{
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  .chart-loading{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--sub);
+    font-size:13px;
+  }
+  .chart-note{
+    font-size:11.5px;
+    color:var(--sub);
+    text-align:center;
+    margin:14px 0 0;
+  }
   .ref-note{
     font-size:11px;
     color:var(--sub);
@@ -230,6 +394,8 @@
   }
   .toast.up{ background:var(--green); }
   .toast.down{ background:var(--red); }
+  .toast.analyzing{ background:var(--amber); }
+  .toast.wait{ background:var(--gray); }
   .toast-text b{ font-size:15px; }
   .toast-text span{ display:block; font-size:12px; opacity:0.85; margin-top:2px; }
   .toast-close{
@@ -279,11 +445,37 @@
     <input class="search" id="searchBox" placeholder="Search symbol, e.g. SOL" />
     <button class="sortbtn active" id="sortMover">Movers</button>
     <button class="sortbtn" id="sortAZ">A–Z</button>
+    <button class="sortbtn" id="settingsToggle" aria-label="Settings">⚙</button>
+  </div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-row">
+      <label for="lowInput">Lower bound</label>
+      <div class="settings-input-wrap">
+        <input type="number" id="lowInput" min="1" max="100" value="10" />
+        <span>%</span>
+      </div>
+    </div>
+    <div class="settings-row">
+      <label for="highInput">Upper bound</label>
+      <div class="settings-input-wrap">
+        <input type="number" id="highInput" min="1" max="200" value="50" />
+        <span>%</span>
+      </div>
+    </div>
+    <div class="settings-row">
+      <label for="windowInput">Window</label>
+      <div class="settings-input-wrap">
+        <input type="number" id="windowInput" min="1" max="60" value="3" />
+        <span>min</span>
+      </div>
+    </div>
+    <p class="settings-note">±10–50% band triggers IMPULSE DETECTED. PY then analyzes for ~45s: if the move extends further, it confirms LONG/SHORT; if price retraces ~50%+ of the move, it resolves WAIT. Resets to defaults on reload.</p>
   </div>
 
   <div class="status-line">
     <span><span class="dot"></span><span id="countLabel">Loading symbols…</span></span>
-    <span id="thresholdLabel">Alert at ±10%</span>
+    <span id="thresholdLabel">Signal band 10–50% / 3m</span>
   </div>
 
   <div class="list" id="list">
@@ -297,16 +489,51 @@
   <div class="footer-pill"><span class="dot2"></span><span id="footerStatus">Live • Alerts ON</span></div>
 </div>
 
+<div class="chart-overlay" id="chartOverlay">
+  <div class="chart-header">
+    <button class="chart-back" id="chartBack" aria-label="Back">←</button>
+    <div class="chart-title">
+      <div class="chart-symbol" id="chartSymbol">—</div>
+      <div class="chart-price" id="chartPrice">—</div>
+    </div>
+  </div>
+  <div class="chart-tf-row" id="chartTfRow">
+    <button class="tf-btn" data-tf="1m">1m</button>
+    <button class="tf-btn active" data-tf="5m">5m</button>
+    <button class="tf-btn" data-tf="15m">15m</button>
+    <button class="tf-btn" data-tf="1h">1h</button>
+  </div>
+  <div class="chart-canvas-wrap">
+    <canvas id="chartCanvas"></canvas>
+    <div class="chart-loading" id="chartLoading">Loading candles…</div>
+  </div>
+  <p class="chart-note" id="chartNote">Band shown as reference only — live values reflect your current settings.</p>
+</div>
+
 <script>
-const THRESHOLD = 10.0;
+const THRESHOLD_LOW_DEFAULT = 10.0;
+const THRESHOLD_HIGH_DEFAULT = 50.0;
+const WINDOW_MIN_DEFAULT = 3;
 const POLL_MS = 5000;
 const SYMBOL_REFRESH_MS = 10 * 60 * 1000;
 
+let thresholdLow = THRESHOLD_LOW_DEFAULT;
+let thresholdHigh = THRESHOLD_HIGH_DEFAULT;
+let windowMs = WINDOW_MIN_DEFAULT * 60 * 1000;
+
 let symbols = [];          // array of symbol strings
-let priceData = {};        // symbol -> { price, changePct24h, ref }
+let priceData = {};        // symbol -> { price, changePct, ready }
+let priceHistory = {};     // symbol -> [{t, p}, ...] trimmed to ~windowMs
+let cooldownUntil = {};    // symbol -> timestamp, suppress repeat impulses while still extended
+let analysisState = {};    // symbol -> { sign, impulseStartPrice, impulsePrice, extremePrice, startTime }
+let finalOutcome = {};     // symbol -> { type: 'LONG'|'SHORT'|'WAIT', time, changePct }
 let sortMode = 'movers';
 let searchTerm = '';
-let armed = {};             // symbol -> bool (alert armed)
+
+const CONFIRM_WINDOW_MS = 45 * 1000;   // how long to analyze after an impulse before forcing a decision
+const CONTINUATION_EXTRA_PCT = 1.0;    // extra move beyond impulse point needed to confirm continuation
+const REVERSAL_RETRACE_PCT = 50;       // % of the impulse move given back to call it a reversal
+const OUTCOME_DISPLAY_MS = 8 * 60 * 1000; // how long a finalized LONG/SHORT/WAIT badge stays visible
 
 const listEl = document.getElementById('list');
 const countLabel = document.getElementById('countLabel');
@@ -314,6 +541,45 @@ const toastWrap = document.getElementById('toastWrap');
 const searchBox = document.getElementById('searchBox');
 const sortMoverBtn = document.getElementById('sortMover');
 const sortAZBtn = document.getElementById('sortAZ');
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsPanel = document.getElementById('settingsPanel');
+const lowInput = document.getElementById('lowInput');
+const highInput = document.getElementById('highInput');
+const windowInput = document.getElementById('windowInput');
+const thresholdLabel = document.getElementById('thresholdLabel');
+
+function updateThresholdLabel(){
+  thresholdLabel.textContent = `Signal band ${thresholdLow}–${thresholdHigh}% / ${windowMs/60000}m`;
+}
+
+settingsToggle.addEventListener('click', () => {
+  settingsPanel.classList.toggle('open');
+});
+
+function applySettings(){
+  const low = parseFloat(lowInput.value);
+  const high = parseFloat(highInput.value);
+  const win = parseFloat(windowInput.value);
+
+  if(!isNaN(low) && low > 0) thresholdLow = low;
+  if(!isNaN(high) && high > thresholdLow) thresholdHigh = high;
+  if(!isNaN(win) && win > 0){
+    windowMs = win * 60 * 1000;
+    // clear history so the new window starts collecting fresh, avoids stale-baseline confusion
+    priceHistory = {};
+    for(const sym of symbols){ if(priceData[sym]) priceData[sym].ready = false; }
+    // any in-progress impulse analysis was based on the old window's baseline — discard it
+    analysisState = {};
+    finalOutcome = {};
+    cooldownUntil = {};
+  }
+  updateThresholdLabel();
+  render();
+}
+
+lowInput.addEventListener('change', applySettings);
+highInput.addEventListener('change', applySettings);
+windowInput.addEventListener('change', applySettings);
 
 searchBox.addEventListener('input', e => {
   searchTerm = e.target.value.trim().toUpperCase();
@@ -330,17 +596,12 @@ async function fetchSymbolList(){
     .map(s => s.symbol);
 }
 
-async function fetch24hTickers(){
-  // 24hr ticker gives price + priceChangePercent in one call
-  const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr');
+async function fetchPrices(){
+  // lightweight endpoint: symbol + price only, no 24h stats needed anymore
+  const res = await fetch('https://fapi.binance.com/fapi/v1/ticker/price');
   const data = await res.json();
   const map = {};
-  data.forEach(item => {
-    map[item.symbol] = {
-      price: parseFloat(item.lastPrice),
-      changePct24h: parseFloat(item.priceChangePercent)
-    };
-  });
+  data.forEach(item => { map[item.symbol] = parseFloat(item.price); });
   return map;
 }
 
@@ -350,35 +611,38 @@ function formatPrice(p){
   return p.toPrecision(4);
 }
 
-function showToast(symbol, direction, changePct, ref, current){
+function showToast(symbol, kind, headline, detail){
+  // kind: 'up' (LONG), 'down' (SHORT), 'analyzing' (impulse detected), 'wait'
   const el = document.createElement('div');
-  el.className = 'toast ' + (direction === 'RISE' ? 'up' : 'down');
-  const arrow = direction === 'RISE' ? '↗' : '↘';
+  el.className = 'toast ' + kind;
+  const arrow = kind === 'up' ? '↗' : kind === 'down' ? '↘' : kind === 'analyzing' ? '⚡' : '·';
   el.innerHTML = `
     <div class="toast-text">
-      <b>${arrow} ${symbol.replace('USDT','/USDT')} ${direction}</b>
-      <span>${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}% from ${formatPrice(ref)} → ${formatPrice(current)}</span>
+      <b>${arrow} ${symbol.replace('USDT','/USDT')} — ${headline}</b>
+      <span>${detail}</span>
     </div>
     <button class="toast-close">✕</button>
   `;
   el.querySelector('.toast-close').onclick = () => el.remove();
   toastWrap.appendChild(el);
-  setTimeout(() => { if(el.parentNode) el.remove(); }, 12000);
+  setTimeout(() => { if(el.parentNode) el.remove(); }, kind === 'wait' ? 6000 : 12000);
 
   const card = document.getElementById('card-' + symbol);
   if(card){
     card.classList.add('flash');
     setTimeout(() => card.classList.remove('flash'), 1500);
   }
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = direction === 'RISE' ? 880 : 440;
-    gain.gain.setValueAtTime(0.06, ctx.currentTime);
-    osc.start(); osc.stop(ctx.currentTime + 0.15);
-  }catch(e){}
+  if(kind === 'up' || kind === 'down'){
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = kind === 'up' ? 880 : 440;
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      osc.start(); osc.stop(ctx.currentTime + 0.15);
+    }catch(e){}
+  }
 }
 
 function render(){
@@ -387,7 +651,11 @@ function render(){
     syms = syms.filter(s => s.includes(searchTerm));
   }
   if(sortMode === 'movers'){
-    syms.sort((a,b) => Math.abs(priceData[b].changePct24h) - Math.abs(priceData[a].changePct24h));
+    syms.sort((a,b) => {
+      const ar = priceData[a].ready ? Math.abs(priceData[a].changePct) : -1;
+      const br = priceData[b].ready ? Math.abs(priceData[b].changePct) : -1;
+      return br - ar;
+    });
   } else {
     syms.sort();
   }
@@ -402,47 +670,140 @@ function render(){
 
   listEl.innerHTML = syms.map(sym => {
     const d = priceData[sym];
-    const up = d.changePct24h >= 0;
     const base = sym.replace('USDT','');
+
+    let changeHtml;
+    if(!d.ready){
+      changeHtml = `<div class="change-row"><span class="period">Collecting ${windowMs/60000}m data…</span></div>`;
+    } else {
+      const up = d.changePct >= 0;
+
+      let badgeHtml = '';
+      const st = analysisState[sym];
+      const outcome = finalOutcome[sym];
+      if(st){
+        badgeHtml = `<span class="signal-badge analyzing pulse">⚡ IMPULSE — analyzing</span>`;
+      } else if(outcome && (Date.now() - outcome.time) < OUTCOME_DISPLAY_MS){
+        if(outcome.type === 'WAIT'){
+          badgeHtml = `<span class="signal-badge wait">WAIT</span>`;
+        } else {
+          const isLong = outcome.type === 'LONG';
+          badgeHtml = `<span class="signal-badge ${isLong ? 'up':'down'}">${outcome.type} signal</span>`;
+        }
+      }
+
+      changeHtml = `
+        <div class="change-row ${up ? 'up':'down'}">
+          <span>${up ? '↗' : '↘'} ${up ? '+' : ''}${d.changePct.toFixed(2)}%</span>
+          <span class="period">· ${windowMs/60000}m</span>
+        </div>
+        ${badgeHtml}`;
+    }
+
     return `
-      <div class="card" id="card-${sym}">
+      <div class="card" id="card-${sym}" data-symbol="${sym}">
         <div class="card-top">
           <div class="symbol">${base}<span class="quote">/USDT PERP</span></div>
-          <svg class="bell armed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="bell armed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" onclick="event.stopPropagation()">
             <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
         </div>
         <div class="price">$${formatPrice(d.price)}</div>
-        <div class="change-row ${up ? 'up':'down'}">
-          <span>${up ? '↗' : '↘'} ${up ? '+' : ''}${d.changePct24h.toFixed(2)}%</span>
-          <span class="period">· 24h</span>
-        </div>
+        ${changeHtml}
       </div>
     `;
   }).join('');
+
+  listEl.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => openChart(card.dataset.symbol));
+  });
 }
 
 async function pollLoop(){
   try{
-    const tickers = await fetch24hTickers();
+    const prices = await fetchPrices();
+    const now = Date.now();
+
     for(const sym of symbols){
-      if(!tickers[sym]) continue;
-      const current = tickers[sym].price;
-      if(!priceData[sym]){
-        priceData[sym] = { price: current, changePct24h: tickers[sym].changePct24h, ref: current };
-        continue;
+      const current = prices[sym];
+      if(current === undefined) continue;
+
+      if(!priceHistory[sym]) priceHistory[sym] = [];
+      priceHistory[sym].push({ t: now, p: current });
+
+      // trim anything older than the window (keep one point just outside as baseline anchor)
+      const cutoff = now - windowMs;
+      let hist = priceHistory[sym];
+      let trimIdx = 0;
+      for(let i = 0; i < hist.length - 1; i++){
+        if(hist[i+1].t <= cutoff) trimIdx = i + 1; else break;
       }
-      const prev = priceData[sym];
-      const ref = prev.ref;
-      const changeFromRef = ((current - ref) / ref) * 100;
+      if(trimIdx > 0) hist = hist.slice(trimIdx);
+      priceHistory[sym] = hist;
 
-      priceData[sym] = { price: current, changePct24h: tickers[sym].changePct24h, ref: ref };
+      const oldest = hist[0];
+      const ready = (now - oldest.t) >= windowMs - POLL_MS; // ~full window of history collected
+      const changePct = ready ? ((current - oldest.p) / oldest.p) * 100 : 0;
 
-      if(Math.abs(changeFromRef) >= THRESHOLD){
-        const direction = changeFromRef > 0 ? 'RISE' : 'FALL';
-        showToast(sym, direction, changeFromRef, ref, current);
-        priceData[sym].ref = current; // reset reference after alert
+      priceData[sym] = { price: current, changePct, ready };
+
+      const st = analysisState[sym];
+
+      if(!st){
+        // Not currently analyzing an impulse — check if one just started
+        if(ready){
+          const absChange = Math.abs(changePct);
+          const inBand = absChange >= thresholdLow && absChange <= thresholdHigh;
+          const inCooldown = cooldownUntil[sym] && now < cooldownUntil[sym];
+          if(inBand && !inCooldown){
+            const sign = changePct > 0 ? 1 : -1;
+            analysisState[sym] = {
+              sign,
+              impulseStartPrice: oldest.p,
+              impulsePrice: current,
+              extremePrice: current,
+              startTime: now
+            };
+            showToast(sym, 'analyzing', 'IMPULSE DETECTED',
+              `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}% — analyzing for continuation…`);
+          }
+        }
+      } else {
+        // Currently analyzing: update extreme, check for continuation / reversal / timeout
+        if(st.sign > 0) st.extremePrice = Math.max(st.extremePrice, current);
+        else st.extremePrice = Math.min(st.extremePrice, current);
+
+        const continuationExtra = st.sign * (st.extremePrice - st.impulsePrice) / st.impulsePrice * 100;
+        const impulseSize = Math.abs(st.extremePrice - st.impulseStartPrice);
+        const givenBack = st.sign > 0 ? (st.extremePrice - current) : (current - st.extremePrice);
+        const retracePct = impulseSize > 0 ? (givenBack / impulseSize * 100) : 0;
+        const elapsed = now - st.startTime;
+
+        let finalize = null; // 'LONG' | 'SHORT' | 'WAIT'
+
+        if(continuationExtra >= CONTINUATION_EXTRA_PCT){
+          finalize = st.sign > 0 ? 'LONG' : 'SHORT';
+        } else if(retracePct >= REVERSAL_RETRACE_PCT){
+          finalize = 'WAIT';
+        } else if(elapsed >= CONFIRM_WINDOW_MS){
+          const netMove = st.sign * (current - st.impulseStartPrice) / st.impulseStartPrice * 100;
+          finalize = netMove > 0 ? (st.sign > 0 ? 'LONG' : 'SHORT') : 'WAIT';
+        }
+
+        if(finalize){
+          const netChangePct = (current - st.impulseStartPrice) / st.impulseStartPrice * 100;
+          if(finalize === 'WAIT'){
+            showToast(sym, 'wait', 'WAIT',
+              `Reversal — gave back ${retracePct.toFixed(0)}% of the move. Sitting out.`);
+          } else {
+            showToast(sym, finalize === 'LONG' ? 'up' : 'down', `${finalize} signal`,
+              `Continuation confirmed — ${netChangePct > 0 ? '+' : ''}${netChangePct.toFixed(2)}% from ${formatPrice(st.impulseStartPrice)} → ${formatPrice(current)}`);
+          }
+          finalOutcome[sym] = { type: finalize, time: now, changePct: netChangePct };
+          delete analysisState[sym];
+          cooldownUntil[sym] = now + windowMs; // avoid re-triggering immediately after resolving
+        }
       }
     }
     render();
@@ -461,7 +822,134 @@ async function refreshSymbols(){
   }
 }
 
+// ---------------- Chart view ----------------
+const chartOverlay = document.getElementById('chartOverlay');
+const chartBack = document.getElementById('chartBack');
+const chartSymbolEl = document.getElementById('chartSymbol');
+const chartPriceEl = document.getElementById('chartPrice');
+const chartCanvas = document.getElementById('chartCanvas');
+const chartLoading = document.getElementById('chartLoading');
+const chartTfRow = document.getElementById('chartTfRow');
+const ctx2d = chartCanvas.getContext('2d');
+
+let activeChartSymbol = null;
+let activeTf = '5m';
+let chartRefreshTimer = null;
+
+chartBack.addEventListener('click', closeChart);
+chartTfRow.querySelectorAll('.tf-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    chartTfRow.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTf = btn.dataset.tf;
+    loadCandles();
+  });
+});
+
+function openChart(symbol){
+  activeChartSymbol = symbol;
+  chartSymbolEl.textContent = symbol.replace('USDT','/USDT') + ' PERP';
+  chartPriceEl.textContent = priceData[symbol] ? '$' + formatPrice(priceData[symbol].price) : '';
+  chartOverlay.classList.add('open');
+  loadCandles();
+  chartRefreshTimer = setInterval(loadCandles, 15000);
+}
+
+function closeChart(){
+  chartOverlay.classList.remove('open');
+  activeChartSymbol = null;
+  if(chartRefreshTimer) clearInterval(chartRefreshTimer);
+}
+
+async function loadCandles(){
+  if(!activeChartSymbol) return;
+  chartLoading.style.display = 'flex';
+  chartLoading.textContent = 'Loading candles…';
+  try{
+    const res = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${activeChartSymbol}&interval=${activeTf}&limit=80`);
+    const raw = await res.json();
+    const candles = raw.map(k => ({
+      open: parseFloat(k[1]),
+      high: parseFloat(k[2]),
+      low: parseFloat(k[3]),
+      close: parseFloat(k[4])
+    }));
+    drawCandles(candles);
+    if(priceData[activeChartSymbol]){
+      chartPriceEl.textContent = '$' + formatPrice(priceData[activeChartSymbol].price);
+    }
+    chartLoading.style.display = 'none';
+  }catch(e){
+    console.error('Candle fetch error', e);
+    chartLoading.textContent = 'Could not load candles — retrying…';
+  }
+}
+
+function drawCandles(candles){
+  const wrap = chartCanvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  chartCanvas.width = w * dpr;
+  chartCanvas.height = h * dpr;
+  chartCanvas.style.width = w + 'px';
+  chartCanvas.style.height = h + 'px';
+  ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx2d.clearRect(0, 0, w, h);
+
+  if(candles.length === 0) return;
+
+  const padding = { top: 16, right: 54, bottom: 16, left: 8 };
+  const plotW = w - padding.left - padding.right;
+  const plotH = h - padding.top - padding.bottom;
+
+  let min = Math.min(...candles.map(c => c.low));
+  let max = Math.max(...candles.map(c => c.high));
+  const span = max - min || max * 0.01;
+  min -= span * 0.06;
+  max += span * 0.06;
+
+  const yFor = (price) => padding.top + (1 - (price - min) / (max - min)) * plotH;
+  const candleW = plotW / candles.length;
+  const bodyW = Math.max(2, candleW * 0.62);
+
+  // gridlines + price labels
+  ctx2d.strokeStyle = '#ebe9e4';
+  ctx2d.lineWidth = 1;
+  ctx2d.font = '11px Roboto Mono, monospace';
+  ctx2d.fillStyle = '#8b8a86';
+  const gridLines = 4;
+  for(let i = 0; i <= gridLines; i++){
+    const price = min + (max - min) * (i / gridLines);
+    const y = yFor(price);
+    ctx2d.beginPath();
+    ctx2d.moveTo(padding.left, y);
+    ctx2d.lineTo(w - padding.right, y);
+    ctx2d.stroke();
+    ctx2d.fillText(formatPrice(price), w - padding.right + 6, y + 3);
+  }
+
+  candles.forEach((c, i) => {
+    const x = padding.left + i * candleW + candleW / 2;
+    const up = c.close >= c.open;
+    ctx2d.strokeStyle = up ? '#0f9d58' : '#d13b3b';
+    ctx2d.fillStyle = up ? '#0f9d58' : '#d13b3b';
+
+    ctx2d.beginPath();
+    ctx2d.moveTo(x, yFor(c.high));
+    ctx2d.lineTo(x, yFor(c.low));
+    ctx2d.stroke();
+
+    const yOpen = yFor(c.open);
+    const yClose = yFor(c.close);
+    const top = Math.min(yOpen, yClose);
+    const bodyH = Math.max(1.5, Math.abs(yClose - yOpen));
+    ctx2d.fillRect(x - bodyW / 2, top, bodyW, bodyH);
+  });
+}
+
 async function init(){
+  updateThresholdLabel();
   await refreshSymbols();
   await pollLoop();
   setInterval(pollLoop, POLL_MS);
