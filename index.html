@@ -1,0 +1,592 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111214"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="PY5"><title>PY5 Monitor</title>
+<link rel="manifest" href="./manifest.json"><link rel="icon" href="./favicon-32.png"><link rel="apple-touch-icon" href="./icon-180.png">
+<style>
+:root{--bg:#f5f4f1;--card:#fff;--ink:#151619;--muted:#888781;--line:#e7e5df;--green:#0c9b55;--red:#d33d3d;--amber:#b87508;--blue:#3867d6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.app{max-width:520px;margin:auto;min-height:100vh;padding:22px 14px 90px}
+header{text-align:center}
+h1{font-size:38px;letter-spacing:-.04em;margin:0;font-weight:850}
+header p{margin:3px 0;color:var(--muted);font-size:13px}
+.conn{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;margin-top:4px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor}
+.conn.live{color:var(--green)}.conn.stale{color:var(--amber)}.conn.off{color:var(--muted)}
+
+.toolbar{display:flex;gap:7px;margin:18px 0 10px}
+.search{min-width:0;flex:1;border:1px solid var(--line);border-radius:11px;padding:11px 12px;font-size:14px;background:var(--card)}
+button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:11px;padding:9px 11px;font-size:12px;font-weight:700}
+.btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.segmented{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.segmented .btn{padding:11px 2px;font-size:13px}
+
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px}
+.tabs .btn{padding:9px 2px}
+.status{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;padding:0 2px 10px}
+.live{color:var(--green);font-weight:700}
+.list{display:flex;flex-direction:column;gap:9px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;transition:.2s}
+.card.flash{box-shadow:0 0 0 3px #15161922;border-color:var(--ink)}
+.top{display:flex;justify-content:space-between}
+.sym{font-weight:800;font-size:14px}
+.sym span{font-weight:600;color:var(--muted)}
+.price{font-family:ui-monospace,monospace;font-weight:800;font-size:25px;margin:8px 0 4px}
+.move{font-family:ui-monospace,monospace;font-weight:800;font-size:14px}
+.up{color:var(--green)}.down{color:var(--red)}.muted{color:var(--muted)}
+.badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.badge{border-radius:999px;padding:4px 7px;font-size:10px;font-weight:800}
+.b-long{background:#e4f6ec;color:var(--green)}
+.b-short{background:#faeaea;color:var(--red)}
+.b-imp{background:#fff0d8;color:var(--amber)}
+.b-wait{background:#ecebe7;color:#66645f}
+.b-py5{background:#eaeeff;color:var(--blue)}
+.b-liq{background:#fdeaea;color:#a12727}
+.flow{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.45}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.chip{border-radius:7px;padding:2px 6px;font-size:9px;font-weight:800;letter-spacing:.02em;background:#ecebe7;color:#66645f}
+.chip.c-yes{background:#e4f6ec;color:var(--green)}
+.chip.c-no{background:#faeaea;color:var(--red)}
+.chip.c-neu{background:#ecebe7;color:#66645f}
+.recall{font-size:10.5px;color:var(--blue);margin-top:6px;line-height:1.4}
+.score{font-family:ui-monospace,monospace;font-weight:800}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat .label{font-size:10.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.stat .value{font-family:ui-monospace,monospace;font-weight:800;font-size:20px;margin-top:3px}
+
+.section{margin-bottom:16px}
+.section h2{font-size:13px;font-weight:800;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+.section h2 .count{color:var(--muted);font-weight:700;font-size:11px}
+.prow{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}
+.prow .top{margin-bottom:2px}
+.prow .sub{font-size:11px;color:var(--muted)}
+.actline{font-size:11.5px;color:var(--muted);padding:7px 0;border-bottom:1px solid var(--line)}
+.actline:last-child{border-bottom:none}
+.actline b{color:var(--ink)}
+
+.panel{display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:10px}
+.panel.open{display:block}
+.panel h3{font-size:12px;margin:2px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.row{display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:12px;font-weight:700;gap:8px}
+.row input{width:76px;border:1px solid var(--line);border-radius:8px;padding:7px;text-align:right}
+.row input.wide{width:100%;text-align:left;font-weight:600}
+.note{font-size:10.5px;color:var(--muted);line-height:1.5}
+.hr{border:none;border-top:1px solid var(--line);margin:12px 0}
+.rowbtns{display:flex;gap:8px;margin-top:10px}
+.rowbtns .btn{flex:1}
+
+.toastbox{position:fixed;z-index:30;top:12px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none}
+.toast{width:min(450px,92vw);padding:12px 14px;border-radius:13px;background:var(--ink);color:#fff;box-shadow:0 12px 30px #0003;font-size:12px;pointer-events:auto}
+.toast b{font-size:14px}
+.toast.long{background:var(--green)}.toast.short{background:var(--red)}.toast.imp{background:var(--amber)}.toast.py5{background:var(--blue)}
+.empty,.loading{text-align:center;color:var(--muted);padding:40px 10px;font-size:13px}
+.footer{position:fixed;bottom:0;left:0;right:0;text-align:center;padding:20px 0 14px;background:linear-gradient(transparent,var(--bg) 45%)}
+.pill{display:inline-flex;background:var(--ink);color:#fff;border-radius:999px;padding:8px 13px;font-size:11px;font-weight:700}
+
+.chart{display:none;position:fixed;inset:0;z-index:20;background:var(--bg);padding:16px}
+.chart.open{display:flex;flex-direction:column}
+.charthead{display:flex;gap:10px;align-items:center}
+.canvaswrap{margin-top:12px;flex:1;min-height:320px;background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.canvaswrap canvas{width:100%;height:100%}
+</style></head><body>
+
+<div class="toastbox" id="toastbox"></div>
+<main class="app">
+<header>
+  <h1>PY5</h1>
+  <p>BINANCE PERPETUALS &middot; LIVE MARKET + ENGINE MONITOR</p>
+  <div class="conn off" id="backendConn"><span class="dot"></span><span id="backendConnText">Backend not connected</span></div>
+</header>
+
+<div class="segmented" id="viewSwitch">
+  <button class="btn active" data-view="markets">Markets</button>
+  <button class="btn" data-view="portfolio">Portfolio</button>
+</div>
+
+<div class="toolbar">
+  <input id="search" class="search" placeholder="Search BTC, SOL, XRP&hellip;">
+  <button id="settingsBtn" class="btn">&#9881;</button>
+  <button id="sound" class="btn">&#128264;</button>
+</div>
+
+<section class="panel" id="panel">
+  <h3>Market detection</h3>
+  <div class="row"><span>Impulse threshold</span><input id="low" type="number" min="0.1" max="100" step="0.1" value="1"></div>
+  <div class="row"><span>Detection window</span><input id="win" type="number" min="1" max="15" step="1" value="3"></div>
+  <div class="row"><span>Confirm seconds</span><input id="confirm" type="number" min="10" max="120" step="5" value="45"></div>
+  <p class="note">Fast price data comes from Binance Futures WebSocket. OI, taker flow, order-book depth, top-trader vs retail positioning, funding rate and the public liquidation stream are all real Binance evidence, shown as separate chips rather than one blended score. LONG/SHORT are scanner decisions, not guarantees. Tap &#128264; once to enable sound because browsers block unsolicited audio.</p>
+  <hr class="hr">
+  <h3>Local outcome memory</h3>
+  <p class="note">Every resolved signal is logged on this device only (symbol, the evidence chips at trigger time, and what happened) so similar setups can be recalled later. It's a small, self-reported sample size &mdash; treat "similar setups before" as a hint, not a statistic, until it has built up real volume. Nothing leaves your phone.</p>
+  <div class="rowbtns"><button class="btn" id="clearMemory">Clear learned history (<span id="memCount">0</span> entries)</button></div>
+  <hr class="hr">
+  <h3>PY5 backend</h3>
+  <div class="row"><input id="apiBase" class="wide" placeholder="API base URL (e.g. http://localhost:8000)"></div>
+  <div class="row"><input id="apiKey" class="wide" type="password" placeholder="API key (PY_API_KEY)"></div>
+  <p class="note">If PY5 is running in Termux on this same phone, use <code>http://localhost:8000</code>. The key is stored only in this browser, on this device &mdash; never sent anywhere except your own backend.</p>
+  <div class="rowbtns"><button class="btn" id="backendCancel">Cancel</button><button class="btn active" id="backendSave">Save &amp; connect</button></div>
+</section>
+
+<div class="tabs" id="tabs"><button class="btn active" data-tab="all">All</button><button class="btn" data-tab="rise">Rise</button><button class="btn" data-tab="fall">Fall</button><button class="btn" data-tab="long">Long</button><button class="btn" data-tab="short">Short</button></div>
+<div class="tabs"><button class="btn" data-tab="impulse">Impulse</button><button class="btn" id="az">A&ndash;Z</button><button class="btn" id="movers">Movers</button></div>
+
+<div id="marketsView">
+  <div class="status"><span><span class="dot live"></span><span id="connection">Connecting&hellip;</span></span><span id="freshness">Price: &mdash;</span></div>
+  <div id="list" class="list"><div class="loading">Loading market&hellip;</div></div>
+</div>
+
+<div id="portfolioView" style="display:none">
+  <div class="stats">
+    <div class="stat"><div class="label">Equity</div><div class="value" id="stEquity">&mdash;</div></div>
+    <div class="stat"><div class="label">Total PnL</div><div class="value" id="stPnl">&mdash;</div></div>
+    <div class="stat"><div class="label">Open positions</div><div class="value" id="stOpen">&mdash;</div></div>
+    <div class="stat"><div class="label">Win rate</div><div class="value" id="stWin">&mdash;</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Open positions <span class="count" id="cntOpen">0</span></h2>
+    <div id="posList"><div class="empty">Connect your backend to see open positions.</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Recent signals <span class="count" id="cntSig">0</span></h2>
+    <div id="sigList"><div class="empty">No signals yet.</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Activity <span class="count" id="cntAct">0</span></h2>
+    <div id="actList" class="prow"><div class="empty">Waiting for the first scan cycle&hellip;</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Closed trades <span class="count" id="cntClosed">0</span></h2>
+    <div id="closedList"><div class="empty">No closed trades yet.</div></div>
+  </div>
+</div>
+
+</main>
+
+<div class="footer"><span class="pill" id="footer">PY5 &middot; Starting</span></div>
+
+<section class="chart" id="chart"><div class="charthead"><button class="btn" id="back">&larr;</button><div><b id="chartSym">&mdash;</b><div class="muted" id="chartPrice">&mdash;</div></div></div><div class="tabs" style="margin-top:12px"><button class="btn" data-tf="1m">1m</button><button class="btn active" data-tf="5m">5m</button><button class="btn" data-tf="15m">15m</button><button class="btn" data-tf="1h">1h</button></div><div class="canvaswrap"><canvas id="canvas"></canvas></div></section>
+
+<script>
+'use strict';
+const BAPI='https://fapi.binance.com',WS='wss://fstream.binance.com/ws/!ticker@arr';
+
+/* ---------- shared state ---------- */
+const state={
+  symbols:[],data:new Map(),history:new Map(),signals:new Map(),flow:new Map(),
+  tab:'all',sort:'movers',search:'',threshold:1,windowMs:180000,confirmMs:45000,
+  ws:null,reconnect:1000,audio:null,sound:false,lastPriceAt:0,view:'markets'
+};
+const backend={
+  base:localStorage.getItem('py5_api_base')||'',
+  key:localStorage.getItem('py5_api_key')||'',
+  status:'off', // off | live | stale
+  lastOk:0,
+  py5signals:new Map(), // symbol -> {type, at} — overlays onto market cards
+  positions:[],closed:[],signalsFeed:[],activity:[],stats:{}
+};
+
+/* Extra live observers, all real Binance endpoints: liquidation stream, top-trader vs
+   retail positioning, funding rate. Each is optional evidence — if one has no data yet
+   it's shown as neutral, never guessed. */
+const observers={
+  liq:new Map(),      // symbol -> [{t,side,notional}] rolling liquidation prints
+  liqWs:null,liqReconnect:1000,
+  posRatio:new Map(), // symbol -> {top, retail, at}
+  funding:new Map()   // symbol -> {rate, at}
+};
+
+/* Local outcome memory — the app's only form of "learning": every resolved signal is
+   logged locally (on this device) with the factor state it fired under, so similar
+   setups can be recalled later. Small-sample and explicitly labelled as such. */
+const MEMORY_KEY='py5_outcome_memory';
+function loadMemory(){try{return JSON.parse(localStorage.getItem(MEMORY_KEY)||'[]')}catch{return[]}}
+function saveMemory(arr){try{localStorage.setItem(MEMORY_KEY,JSON.stringify(arr.slice(-600)))}catch{}}
+let memory=loadMemory();
+function recordOutcome(sym,fingerprint,type,changePct){
+  memory.push({s:sym,f:fingerprint,o:type,c:changePct,t:Date.now()});
+  saveMemory(memory);
+}
+function recallSimilar(fingerprint){
+  const hits=memory.filter(m=>m.f===fingerprint);
+  if(hits.length<3)return null;
+  const directional=hits.filter(h=>h.o==='LONG'||h.o==='SHORT');
+  if(!directional.length)return null;
+  const followed=directional.filter(h=>(h.o==='LONG'&&h.c>0)||(h.o==='SHORT'&&h.c<0)).length;
+  return{n:hits.length,rate:Math.round(followed/directional.length*100)};
+}
+
+const $=id=>document.getElementById(id),list=$('list');
+
+/* ---------- formatting / fx ---------- */
+function priceFmt(p){if(!Number.isFinite(p))return'—';if(p===0)return'0';const a=Math.abs(p);if(a>=1000)return p.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});if(a>=1)return p.toLocaleString(undefined,{maximumFractionDigits:4});if(a>=0.01)return p.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');const decimals=Math.min(14,Math.max(4,Math.ceil(-Math.log10(a))+4));return p.toFixed(decimals).replace(/0+$/,'').replace(/\.$/,'')}
+function pct(x){return`${x>=0?'+':''}${x.toFixed(2)}%`}
+function money(x){return Number.isFinite(x)?`$${x.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`:'—'}
+function timeAgo(ts){const s=Math.max(0,Math.floor((Date.now()-ts)/1000));if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago'}
+function toast(kind,title,text){const e=document.createElement('div');e.className='toast '+kind;e.innerHTML=`<b>${title}</b><br>${text}`;$('toastbox').appendChild(e);setTimeout(()=>e.remove(),9000)}
+function beep(kind){if(!state.sound||!state.audio)return;try{const a=state.audio,o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=kind==='short'?440:kind==='long'?880:kind==='py5'?990:660;g.gain.setValueAtTime(.07,a.currentTime);o.start();o.stop(a.currentTime+.18)}catch{}}
+async function get(path){const r=await fetch(BAPI+path,{cache:'no-store'});if(!r.ok)throw Error(r.status);return r.json()}
+
+/* ================= MARKETS (direct Binance — always live, no backend needed) ================= */
+async function bootstrap(){
+  try{
+    const info=await get('/fapi/v1/exchangeInfo');
+    state.symbols=info.symbols.filter(s=>s.status==='TRADING'&&s.contractType==='PERPETUAL'&&s.quoteAsset==='USDT').map(s=>s.symbol);
+    const tickers=await get('/fapi/v1/ticker/24hr');const now=Date.now();
+    tickers.forEach(t=>{if(state.symbols.includes(t.symbol))state.data.set(t.symbol,{price:+t.lastPrice,change24:+t.priceChangePercent,ready:false,at:now})});
+    state.lastPriceAt=now;$('connection').textContent=`${state.symbols.length} pairs • REST ready`;$('footer').textContent='PY5 • LIVE price stream';
+    render();connectWS();seedHistory();
+  }catch(e){console.error(e);$('connection').textContent='REST connection failed';toast('short','PY5 connection error','Retrying Binance market data…');setTimeout(bootstrap,3000)}
+}
+let seedRun=0;
+async function seedHistory(){
+  const run=++seedRun;const windowMs=state.windowMs;const need=Math.min(1000,Math.max(4,Math.ceil(windowMs/60000)+3));
+  const symbols=[...state.symbols];let done=0;const batchSize=12;
+  const status=()=>{$('connection').textContent=`${state.symbols.length} pairs • WebSocket LIVE • seeding ${done}/${symbols.length}`};status();
+  for(let i=0;i<symbols.length;i+=batchSize){
+    if(run!==seedRun)return;const batch=symbols.slice(i,i+batchSize);
+    await Promise.all(batch.map(async sym=>{
+      try{
+        const raw=await get(`/fapi/v1/klines?symbol=${sym}&interval=1m&limit=${need}`);if(run!==seedRun)return;
+        const now=Date.now(),closed=Array.isArray(raw)?raw.filter(k=>+k[6]<now).map(k=>({t:+k[6],p:+k[4]})).filter(x=>Number.isFinite(x.t)&&Number.isFinite(x.p)):[];
+        const live=state.history.get(sym)||[];const merged=[...closed,...live].sort((a,b)=>a.t-b.t);
+        const seen=new Set(),h=[];for(const x of merged){if(x.t<=now&&!seen.has(x.t)){seen.add(x.t);h.push(x)}}
+        const cut=now-state.windowMs;while(h.length>1&&h[0].t<cut)h.shift();state.history.set(sym,h);
+        const d=state.data.get(sym);if(d&&h.length>=2){const span=now-h[0].t;d.move=(d.price/h[0].p-1)*100;d.ready=span>=state.windowMs*.75;if(d.ready)detect(sym,d,h,now)}
+      }catch{}finally{done++}
+    }));
+    status();render();await new Promise(r=>setTimeout(r,120));
+  }
+  $('connection').textContent=`${state.symbols.length} pairs • WebSocket LIVE • rolling data ready`;render();
+}
+function connectWS(){
+  try{if(state.ws)state.ws.close()}catch{}
+  const ws=new WebSocket(WS);state.ws=ws;
+  ws.onopen=()=>{state.reconnect=1000;$('connection').textContent=`${state.symbols.length} pairs • WebSocket LIVE`;$('footer').textContent='PY5 • LIVE • price stream'};
+  ws.onmessage=e=>{
+    try{
+      const arr=JSON.parse(e.data);if(!Array.isArray(arr))return;const now=Date.now();
+      for(const t of arr){
+        if(!state.symbols.includes(t.s))continue;const p=+t.c;if(!p)continue;
+        let d=state.data.get(t.s)||{};d.price=p;d.at=now;state.data.set(t.s,d);
+        let h=state.history.get(t.s)||[];h.push({t:now,p});const cut=now-state.windowMs;while(h.length>1&&h[0].t<cut)h.shift();state.history.set(t.s,h);
+        if(h.length>=2){d.move=(p/h[0].p-1)*100;d.ready=d.ready||((now-h[0].t)>=state.windowMs*.75);if(d.ready)detect(t.s,d,h,now)}
+      }
+      state.lastPriceAt=now;render();
+    }catch{}
+  };
+  ws.onerror=()=>ws.close();
+  ws.onclose=()=>{$('connection').textContent='Reconnecting WebSocket…';setTimeout(connectWS,state.reconnect);state.reconnect=Math.min(state.reconnect*2,15000)};
+}
+function detect(sym,d,h,now){
+  const abs=Math.abs(d.move);let s=state.signals.get(sym);
+  if(!s&&abs>=state.threshold){
+    s={dir:d.move>0?1:-1,start:h[0].p,impulse:d.price,extreme:d.price,at:now};
+    s.fingerprint=fingerprint(factorSnapshot(sym,d,state.flow.get(sym))); // snapshot the evidence at the moment it fired
+    state.signals.set(sym,s);
+    toast('imp',`${sym.replace('USDT','/USDT')} • IMPULSE`,`${pct(d.move)} in rolling ${state.windowMs/60000}m window — analyzing direction`);beep('imp');
+  }else if(s){
+    const p=d.price;if(s.dir>0)s.extreme=Math.max(s.extreme,p);else s.extreme=Math.min(s.extreme,p);
+    const extra=s.dir*((s.extreme-s.impulse)/s.impulse)*100,size=Math.abs(s.extreme-s.start),give=s.dir>0?(s.extreme-p):(p-s.extreme),retr=size?give/size*100:0;
+    let out=null;
+    if(extra>=1)out=s.dir>0?'LONG':'SHORT';else if(retr>=50)out='WAIT';else if(now-s.at>=state.confirmMs){const net=s.dir*(p-s.start)/s.start*100;out=net>0?(s.dir>0?'LONG':'SHORT'):'WAIT'}
+    if(out){
+      state.signals.delete(sym);d.outcome={type:out,time:now,change:(p-s.start)/s.start*100};
+      recordOutcome(sym,s.fingerprint,out,d.outcome.change);
+      if(out==='LONG'||out==='SHORT'){toast(out==='LONG'?'long':'short',`${sym.replace('USDT','/USDT')} • ${out}`,`Continuation confirmed • ${pct(d.outcome.change)}`);beep(out.toLowerCase())}
+      else toast('imp',`${sym.replace('USDT','/USDT')} • WAIT`,'Impulse retraced — no directional signal');
+    }
+  }
+}
+async function flowLoop(){
+  const candidates=[...state.data.entries()].filter(([,d])=>d.ready).sort((a,b)=>Math.abs(b[1].move||0)-Math.abs(a[1].move||0)).slice(0,20).map(x=>x[0]);
+  const period=state.windowMs<=300000?'5m':state.windowMs<=900000?'15m':'30m';
+  for(const sym of candidates){
+    try{
+      const [oi,taker,depth]=await Promise.all([
+        get(`/futures/data/openInterestHist?symbol=${sym}&period=${period}&limit=2`),
+        get(`/futures/data/takerlongshortRatio?symbol=${sym}&period=${period}&limit=1`),
+        get(`/fapi/v1/depth?symbol=${sym}&limit=20`)
+      ]);
+      if(!Array.isArray(oi)||oi.length<2||!Array.isArray(taker)||!taker.length)continue;
+      const oiCh=(+oi.at(-1).sumOpenInterest/+oi[0].sumOpenInterest-1)*100,ratio=+taker[0].buySellRatio,mid=state.data.get(sym).price,band=mid*.005;
+      let bid=0,ask=0;for(const [p,q] of depth.bids||[])if(+p>=mid-band)bid+=+p*+q;for(const [p,q] of depth.asks||[])if(+p<=mid+band)ask+=+p*+q;
+      state.flow.set(sym,{oi:oiCh,ratio,book:bid+ask,at:Date.now()});
+    }catch{}
+  }
+  render();
+}
+/* ---- liquidation cascade stream (public, no auth): wss://fstream.binance.com/ws/!forceOrder@arr ---- */
+function connectLiqWS(){
+  try{if(observers.liqWs)observers.liqWs.close()}catch{}
+  const ws=new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');observers.liqWs=ws;
+  ws.onopen=()=>{observers.liqReconnect=1000};
+  ws.onmessage=e=>{
+    try{
+      const msg=JSON.parse(e.data);const o=msg.o;if(!o)return;
+      const sym=o.s;if(!state.symbols.includes(sym))return;
+      const now=Date.now(),notional=(+o.ap||+o.p)*(+o.q||+o.l||0);
+      let arr=observers.liq.get(sym)||[];arr.push({t:now,side:o.S,notional});
+      const cut=now-state.windowMs;arr=arr.filter(x=>x.t>=cut);observers.liq.set(sym,arr);
+    }catch{}
+  };
+  ws.onerror=()=>ws.close();
+  ws.onclose=()=>{setTimeout(connectLiqWS,observers.liqReconnect);observers.liqReconnect=Math.min(observers.liqReconnect*2,15000)};
+}
+function liqRead(sym){
+  const arr=observers.liq.get(sym);if(!arr||!arr.length)return null;
+  let sell=0,buy=0;for(const x of arr){if(x.side==='SELL')sell+=x.notional;else buy+=x.notional} // SELL forceOrder = a long got liquidated
+  const total=sell+buy;if(total<15000)return null; // ignore noise below ~$15k in-window
+  return{sell,buy,total,skew:sell>buy?-1:1}; // skew -1 = longs getting liquidated (bearish fuel), +1 = shorts squeezed (bullish fuel)
+}
+
+/* ---- top-trader vs retail positioning + funding rate, on the same top-movers cohort as flowLoop ---- */
+async function positionFlowLoop(){
+  const candidates=[...state.data.entries()].filter(([,d])=>d.ready).sort((a,b)=>Math.abs(b[1].move||0)-Math.abs(a[1].move||0)).slice(0,12).map(x=>x[0]);
+  const period=state.windowMs<=300000?'5m':state.windowMs<=900000?'15m':'30m';
+  for(const sym of candidates){
+    try{
+      const [top,global,premium]=await Promise.all([
+        get(`/futures/data/topLongShortPositionRatio?symbol=${sym}&period=${period}&limit=1`),
+        get(`/futures/data/globalLongShortAccountRatio?symbol=${sym}&period=${period}&limit=1`),
+        get(`/fapi/v1/premiumIndex?symbol=${sym}`)
+      ]);
+      if(Array.isArray(top)&&top.length&&Array.isArray(global)&&global.length){
+        observers.posRatio.set(sym,{top:+top[0].longShortRatio,retail:+global[0].longShortRatio,at:Date.now()});
+      }
+      if(premium&&premium.lastFundingRate!==undefined){
+        observers.funding.set(sym,{rate:+premium.lastFundingRate,at:Date.now()});
+      }
+    }catch{}
+  }
+  render();
+}
+
+/* ---- transparent multi-factor confluence: each observer votes for/against/neutral
+   relative to the card's own move direction, instead of one hidden score ---- */
+function factorSnapshot(sym,d,f){
+  const dir=Math.sign(d.move||0)||0;
+  const vote=(bias)=>bias===0||dir===0?0:(Math.sign(bias)===dir?1:-1);
+  const oiVote=f?(Math.abs(f.oi)<1?0:vote(f.oi)):null;
+  const takerVote=f?(Math.abs(f.ratio-1)<0.1?0:vote(f.ratio-1)):null;
+  const pr=observers.posRatio.get(sym);
+  let smVote=null;
+  if(pr){const topBias=pr.top-1,retailBias=pr.retail-1;
+    if(Math.abs(topBias)>0.05&&Math.abs(retailBias)>0.05&&Math.sign(topBias)!==Math.sign(retailBias)){
+      smVote=Math.sign(topBias)===dir?1:-1; // smart money aligned with move & retail against it = supports; reverse = against
+    }else smVote=0;
+  }
+  const fr=observers.funding.get(sym);
+  let fundVote=null;
+  if(fr){const extreme=Math.abs(fr.rate)>0.0002;fundVote=extreme?(Math.sign(fr.rate)===dir?-1:1):0}
+  const liq=liqRead(sym);
+  let liqVote=null;
+  if(liq)liqVote=liq.skew===dir?1:(dir===0?0:0);
+  return{oi:oiVote,taker:takerVote,sm:smVote,fund:fundVote,liq:liqVote,dir};
+}
+function fingerprint(snap){
+  const c=v=>v===null?'.':v>0?'+':v<0?'-':'0';
+  return`${c(snap.oi)}${c(snap.taker)}${c(snap.sm)}${c(snap.fund)}${c(snap.liq)}`;
+}
+function chipRow(snap){
+  const chip=(label,v)=>v===null?'':`<span class="chip ${v>0?'c-yes':v<0?'c-no':'c-neu'}">${label}</span>`;
+  return chip('OI',snap.oi)+chip('TAKER',snap.taker)+chip('SMART$',snap.sm)+chip('FUND',snap.fund)+chip('LIQ',snap.liq);
+}
+
+function directionScore(sym){
+  const d=state.data.get(sym),f=state.flow.get(sym);if(!d?.ready)return{long:0,short:0};
+  let L=50,S=50;const m=d.move||0;if(m>0)L+=20;else if(m<0)S+=20;
+  if(f){if(f.oi>1){if(f.ratio>1.1)L+=15;else if(f.ratio<.9)S+=15}if(f.oi<-1){if(f.ratio<.9)L+=10;else S+=10}if(f.book<5000){L-=5;S-=5}}
+  return{long:Math.max(0,Math.min(100,L)),short:Math.max(0,Math.min(100,S))};
+}
+function render(){
+  let a=[...state.data.entries()].filter(([s])=>!state.search||s.includes(state.search)).filter(([,d])=>d.price);
+  if(state.tab==='rise')a=a.filter(([,d])=>(d.move||0)>0);
+  if(state.tab==='fall')a=a.filter(([,d])=>(d.move||0)<0);
+  if(state.tab==='long')a=a.filter(([s])=>directionScore(s).long>=65);
+  if(state.tab==='short')a=a.filter(([s])=>directionScore(s).short>=65);
+  if(state.tab==='impulse')a=a.filter(([s])=>state.signals.has(s));
+  a.sort((x,y)=>state.sort==='az'?x[0].localeCompare(y[0]):Math.abs(y[1].move||0)-Math.abs(x[1].move||0));
+  a=a.slice(0,80);
+  if(!a.length){list.innerHTML='<div class="empty">No symbols match this view.</div>';return}
+  list.innerHTML=a.map(([s,d])=>{
+    const sc=directionScore(s),sig=state.signals.get(s),o=d.outcome&&Date.now()-d.outcome.time<480000?d.outcome:null,f=state.flow.get(s),p5=backend.py5signals.get(s);
+    const liq=liqRead(s),snap=factorSnapshot(s,d,f),chips=chipRow(snap);
+    const fp=sig?sig.fingerprint:fingerprint(snap),recall=recallSimilar(fp);
+    let badges='';
+    if(sig)badges+='<span class="badge b-imp">⚡ IMPULSE</span>';
+    if(o?.type==='LONG')badges+='<span class="badge b-long">LONG</span>';
+    if(o?.type==='SHORT')badges+='<span class="badge b-short">SHORT</span>';
+    if(o?.type==='WAIT')badges+='<span class="badge b-wait">WAIT</span>';
+    if(!sig&&!o&&sc.long>=65)badges+=`<span class="badge b-long">LONG CANDIDATE ${sc.long}</span>`;
+    if(!sig&&!o&&sc.short>=65)badges+=`<span class="badge b-short">SHORT CANDIDATE ${sc.short}</span>`;
+    if(liq)badges+=`<span class="badge b-liq">${liq.skew<0?'⚠ LONGS LIQUIDATED':'⚠ SHORTS SQUEEZED'}</span>`;
+    if(p5)badges+=`<span class="badge b-py5">PY5 ${p5.type}</span>`;
+    const flow=f?`OI ${pct(f.oi)} · Taker ${f.ratio.toFixed(2)} · Book $${Math.round(f.book).toLocaleString()}`:'Flow evidence collecting…';
+    const recallLine=recall?`<div class="recall">Similar setups before: <b>${recall.rate}% continued</b> · ${recall.n} samples on this device</div>`:'';
+    return `<article class="card ${sig||p5||liq?'flash':''}" data-s="${s}"><div class="top"><div class="sym">${s.replace('USDT','')}<span>/USDT PERP</span></div><div class="score">L${sc.long} / S${sc.short}</div></div><div class="price">$${priceFmt(d.price)}</div><div class="move ${(d.move||0)>=0?'up':'down'}">${d.ready?pct(d.move):'Collecting rolling window…'} <span class="muted">· ${state.windowMs/60000}m</span></div><div class="badges">${badges}</div><div class="flow">${flow}</div><div class="chips">${chips}</div>${recallLine}</article>`;
+  }).join('');
+  list.querySelectorAll('.card').forEach(c=>c.onclick=()=>openChart(c.dataset.s));
+}
+
+/* ================= PORTFOLIO (PY5 backend — polled, never blocks Markets) ================= */
+function setBackendStatus(kind,text){
+  const el=$('backendConn'),t=$('backendConnText');
+  el.className='conn '+kind;t.textContent=text;
+}
+async function backendGet(path){
+  if(!backend.base)throw Error('no-backend');
+  const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),6000);
+  try{
+    const r=await fetch(backend.base.replace(/\/$/,'')+path,{cache:'no-store',signal:ctrl.signal,headers:backend.key?{'X-API-Key':backend.key}:{}});
+    if(!r.ok)throw Error(String(r.status));
+    return await r.json();
+  }finally{clearTimeout(to)}
+}
+async function pollBackend(){
+  if(!backend.base){setBackendStatus('off','Backend not connected');scheduleBackend();return}
+  try{
+    const [health,stats,openPos,closedPos,signals,activity]=await Promise.all([
+      backendGet('/health'),backendGet('/stats'),backendGet('/positions/open'),
+      backendGet('/positions/closed'),backendGet('/signals'),backendGet('/activity')
+    ]);
+    backend.lastOk=Date.now();
+    backend.stats=stats||{};
+    backend.positions=Array.isArray(openPos)?openPos:(openPos?.positions||[]);
+    backend.closed=Array.isArray(closedPos)?closedPos:(closedPos?.positions||[]);
+    const newSignals=Array.isArray(signals)?signals:(signals?.signals||[]);
+    detectNewSignals(newSignals);
+    backend.signalsFeed=newSignals;
+    backend.activity=Array.isArray(activity)?activity:(activity?.activity||[]);
+    setBackendStatus('live',`Live · cycle ${health?.cycle_count??'—'} · last scan ${health?.last_cycle_at?timeAgo(new Date(health.last_cycle_at).getTime()):'—'}`);
+    renderPortfolio();
+  }catch(e){
+    const staleFor=Date.now()-backend.lastOk;
+    if(backend.lastOk&&staleFor<60000)setBackendStatus('stale','Backend slow to respond…');
+    else setBackendStatus('off','Backend offline — retrying…');
+  }
+  scheduleBackend();
+}
+let backendTimer=null;
+function scheduleBackend(){clearTimeout(backendTimer);backendTimer=setTimeout(pollBackend,5000)}
+let seenSignalIds=new Set();
+function detectNewSignals(newSignals){
+  backend.py5signals.clear();
+  for(const sg of newSignals){
+    const sym=sg.symbol||sg.sym;if(!sym)continue;
+    backend.py5signals.set(sym,{type:sg.signal||sg.type||'SIGNAL',at:sg.time||Date.now()});
+    const id=sg.id||`${sym}-${sg.time}`;
+    if(!seenSignalIds.has(id)){
+      seenSignalIds.add(id);
+      if(seenSignalIds.size>500){seenSignalIds=new Set([...seenSignalIds].slice(-200))}
+      toast('py5',`${sym.replace('USDT','/USDT')} • PY5 ${(sg.signal||sg.type||'SIGNAL')}`,sg.reason||'Full signal fired on the live engine');
+      beep('py5');
+    }
+  }
+}
+function renderPortfolio(){
+  const s=backend.stats;
+  $('stEquity').textContent=Number.isFinite(s.equity)?money(s.equity):'—';
+  $('stPnl').textContent=Number.isFinite(s.total_pnl??s.pnl)?money(s.total_pnl??s.pnl):'—';
+  $('stOpen').textContent=String(backend.positions.length||0);
+  $('stWin').textContent=Number.isFinite(s.win_rate)?`${(s.win_rate*100).toFixed(1)}%`:(Number.isFinite(s.win_rate_pct)?`${s.win_rate_pct.toFixed(1)}%`:'—');
+
+  $('cntOpen').textContent=backend.positions.length;
+  $('posList').innerHTML=backend.positions.length?backend.positions.map(p=>{
+    const sym=p.symbol||p.sym,side=(p.side||'').toUpperCase(),pnl=p.unrealized_pnl??p.pnl;
+    return `<div class="prow" data-s="${sym}"><div class="top"><div class="sym">${(sym||'').replace('USDT','')}<span> /USDT · ${side}</span></div><div class="${pnl>=0?'up':'down'} score">${money(pnl)}</div></div><div class="sub">Entry ${priceFmt(+p.entry_price||p.entry)} · Now ${priceFmt(+p.mark_price||p.current)}</div></div>`;
+  }).join(''):'<div class="empty">Connect your backend to see open positions.</div>';
+  $('posList').querySelectorAll('.prow[data-s]').forEach(c=>c.onclick=()=>openChart(c.dataset.s));
+
+  $('cntSig').textContent=backend.signalsFeed.length;
+  $('sigList').innerHTML=backend.signalsFeed.length?backend.signalsFeed.slice(0,15).map(sg=>{
+    const sym=sg.symbol||sg.sym;
+    return `<div class="prow" data-s="${sym}"><div class="top"><div class="sym">${(sym||'').replace('USDT','')}<span> /USDT</span></div><div class="badge ${((sg.signal||sg.type||'')==='LONG')?'b-long':'b-short'}">${sg.signal||sg.type||'SIGNAL'}</div></div><div class="sub">${sg.reason||''} · ${sg.time?timeAgo(new Date(sg.time).getTime()):''}</div></div>`;
+  }).join(''):'<div class="empty">No signals yet.</div>';
+  $('sigList').querySelectorAll('.prow[data-s]').forEach(c=>c.onclick=()=>openChart(c.dataset.s));
+
+  $('cntAct').textContent=backend.activity.length;
+  $('actList').innerHTML=backend.activity.length?backend.activity.slice(0,25).map(e=>
+    `<div class="actline"><b>${(e.symbol||e.sym||'').replace('USDT','')}</b> — ${e.stage||e.message||e.reason||''}</div>`
+  ).join(''):'<div class="empty">Waiting for the first scan cycle…</div>';
+
+  $('cntClosed').textContent=backend.closed.length;
+  $('closedList').innerHTML=backend.closed.length?backend.closed.slice(0,20).map(t=>{
+    const sym=t.symbol||t.sym,pnl=t.pnl??t.realized_pnl;
+    return `<div class="prow"><div class="top"><div class="sym">${(sym||'').replace('USDT','')}<span> /USDT · ${(t.side||'').toUpperCase()}</span></div><div class="${pnl>=0?'up':'down'} score">${money(pnl)}</div></div><div class="sub">${t.closed_at?timeAgo(new Date(t.closed_at).getTime()):''}</div></div>`;
+  }).join(''):'<div class="empty">No closed trades yet.</div>';
+}
+
+/* ================= chart (shared — Binance klines, works with or without backend) ================= */
+const chart=$('chart'),canvas=$('canvas'),cx=canvas.getContext('2d');let chartSym=null,chartTf='5m';
+$('back').onclick=()=>chart.classList.remove('open');
+document.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tf]').forEach(x=>x.classList.remove('active'));b.classList.add('active');chartTf=b.dataset.tf;drawChart()});
+function openChart(s){if(!s)return;chartSym=s;chart.classList.add('open');$('chartSym').textContent=s.replace('USDT','/USDT')+' PERP';drawChart()}
+async function drawChart(){
+  if(!chartSym)return;
+  try{
+    const raw=await get(`/fapi/v1/klines?symbol=${chartSym}&interval=${chartTf}&limit=80`);
+    const w=canvas.parentElement.clientWidth,h=canvas.parentElement.clientHeight,dpr=devicePixelRatio||1;
+    canvas.width=w*dpr;canvas.height=h*dpr;cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,w,h);
+    const cs=raw.map(k=>({o:+k[1],hi:+k[2],lo:+k[3],c:+k[4]})),min=Math.min(...cs.map(x=>x.lo)),max=Math.max(...cs.map(x=>x.hi)),span=max-min||1;
+    const y=p=>12+(1-(p-(min-span*.05))/(span*1.1))*(h-24),cw=(w-45)/cs.length;
+    cs.forEach((c,i)=>{
+      const x=8+i*cw+cw/2,up=c.c>=c.o;cx.strokeStyle=up?'#0c9b55':'#d33d3d';cx.fillStyle=cx.strokeStyle;
+      cx.beginPath();cx.moveTo(x,y(c.hi));cx.lineTo(x,y(c.lo));cx.stroke();
+      const top=Math.min(y(c.o),y(c.c)),bh=Math.max(1.5,Math.abs(y(c.o)-y(c.c)));cx.fillRect(x-cw*.3,top,cw*.6,bh);
+    });
+    $('chartPrice').textContent='$'+priceFmt(pNow(chartSym));
+  }catch{}
+}
+function pNow(s){return state.data.get(s)?.price||0}
+
+/* ================= UI wiring ================= */
+$('search').oninput=e=>{state.search=e.target.value.trim().toUpperCase();render()};
+$('settingsBtn').onclick=()=>{$('panel').classList.toggle('open')};
+$('sound').onclick=()=>{try{state.audio=state.audio||new(window.AudioContext||window.webkitAudioContext)();state.audio.resume();state.sound=true;$('sound').textContent='🔊';toast('long','Sound alerts enabled','PY5 can now play LONG/SHORT/IMPULSE tones')}catch{toast('short','Sound unavailable','Browser audio could not be started')}};
+$('low').onchange=e=>{state.threshold=Math.max(.1,+e.target.value||1);state.history.clear();state.signals.clear();render()};
+$('win').onchange=e=>{state.windowMs=Math.max(60000,(+e.target.value||3)*60000);state.history.clear();state.signals.clear();render();seedHistory()};
+$('confirm').onchange=e=>{state.confirmMs=Math.max(10000,(+e.target.value||45)*1000)};
+document.querySelectorAll('#tabs .btn, [data-tab="impulse"]').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tabs .btn, [data-tab="impulse"]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.tab=b.dataset.tab;render()});
+$('az').onclick=()=>{state.sort=state.sort==='az'?'movers':'az';$('az').classList.toggle('active',state.sort==='az');render()};
+$('movers').onclick=()=>{state.sort='movers';$('az').classList.remove('active');render()};
+
+$('memCount').textContent=memory.length;
+$('clearMemory').onclick=()=>{memory=[];saveMemory(memory);$('memCount').textContent=0;toast('imp','Learned history cleared','Local outcome memory has been reset on this device')};
+
+$('apiBase').value=backend.base;$('apiKey').value=backend.key;
+$('backendCancel').onclick=()=>{$('panel').classList.remove('open');$('apiBase').value=backend.base;$('apiKey').value=backend.key};
+$('backendSave').onclick=()=>{
+  backend.base=$('apiBase').value.trim();backend.key=$('apiKey').value.trim();
+  localStorage.setItem('py5_api_base',backend.base);localStorage.setItem('py5_api_key',backend.key);
+  $('panel').classList.remove('open');backend.lastOk=0;pollBackend();
+};
+
+const tabRows=document.querySelectorAll('.tabs');
+document.querySelectorAll('#viewSwitch .btn').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#viewSwitch .btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  state.view=b.dataset.view;
+  $('marketsView').style.display=state.view==='markets'?'':'none';
+  $('portfolioView').style.display=state.view==='portfolio'?'':'none';
+  $('search').style.display=state.view==='markets'?'':'none';
+  tabRows.forEach(r=>r.style.display=state.view==='markets'?'':'none');
+});
+
+connectLiqWS();
+setInterval(flowLoop,20000);
+setInterval(positionFlowLoop,20000);
+setInterval(()=>{$('freshness').textContent=Date.now()-state.lastPriceAt>8000?'Price stream stale — reconnecting':'Price: live'},1000);
+setInterval(()=>{for(const[,d]of state.data)if(d.outcome&&Date.now()-d.outcome.time>480000)delete d.outcome;render()},10000);
+
+bootstrap();
+pollBackend();
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{})}
+</script></body></html>
